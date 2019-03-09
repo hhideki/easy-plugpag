@@ -45,3 +45,6 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Exported
+exported/*

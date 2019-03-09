@@ -21,6 +21,7 @@ struct PlugPagInternalData
 {
     struct PlugPagApplicationData appData;
     tyComPort portNumber;
+    unsigned char isInitialized;
 };
 
 
@@ -45,6 +46,7 @@ struct PlugPag *PlugPag(tyComPort portNumber, struct PlugPagApplicationData *app
     strncpy(internal->appData.appName, appData->appName, sizeof(tyAppName));
     strncpy(internal->appData.appVersion, appData->appVersion, sizeof(tyAppVersion));
     strncpy(internal->portNumber, portNumber, sizeof(tyComPort));
+    internal->isInitialized = (unsigned char) 0;
 
     pp->__internal = internal;
     pp->pay = pay;
@@ -84,7 +86,15 @@ static int pay(struct PlugPag *plugpag, struct PlugPagPaymentData *paymentData, 
 
 static int voidPayment(struct PlugPag *plugpag, stPPPSTransactionResult *outResult)
 {
-    return PPPS_RET_OK;
+    ASSERT(plugpag == NULL, { return EASY_PLUGPAG_ERROR_NULL_PLUGPAG_INSTANCE; });
+    ASSERT(outResult == NULL, { return EASY_PLUGPAG_ERROR_NULL_RESULT_OUTPUT; });
+
+    struct PlugPagInternalData *internal = (struct PlugPagInternalData *) plugpag->__internal;
+
+    SetVersionName(internal->appData.appName, internal->appData.appVersion);
+    InitBTConnection((const tyComPort *) internal->portNumber);
+
+    return CancelTransaction(outResult);
 }
 
 
@@ -92,8 +102,6 @@ static int getLastApprovedTransaction(struct PlugPag *plugpag, stPPPSTransaction
 {
     return PPPS_RET_OK;
 }
-
-
 
 
 struct PlugPagApplicationData *PlugPagApplicationData(tyAppName appName, tyAppVersion appVersion)
