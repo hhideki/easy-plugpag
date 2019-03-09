@@ -36,6 +36,7 @@ compile: $(OUTPUT_DIR)
 
 export: $(EXPORT_DIR) compile
 	$(CC) -shared $(OUTPUT_DIR)/easy-plugpag.o -o $(EXPORT_DIR)/easy-plupag.so
+	cp $(INCLUDE_DIRS)/*.h $(EXPORT_DIR)/
 
 
 link:

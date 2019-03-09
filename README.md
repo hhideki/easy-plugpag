@@ -66,12 +66,66 @@ utilizado.
 
 1. Execute o comando `make clean export`
 
-2. Copie o arquivo *exported/easy-plugpag.so* para algum diretório do seu projeto
+2. Copie os arquivos do diretório *exported* para o seu projeto
 
-3. Copie o arquivo *includes/easy-plugpag.h* para algum diretório do seu projeto
-
-4. Altere o script de compilação do seu projeto para incluir a biblioteca e para
-utilizar o diretório no qual o *easy-plupag.h* foi copiado.
+4. Altere o script de compilação do seu projeto para incluir a biblioteca
+*easy-plugpag.so* e para utilizar o diretório no qual o *easy-plugpag.h* foi
+copiado.
 
 Um exemplo de como incluir utilizar bibliotecas e header files de outras
 bibliotecas pode ser extraído do *Makefile* desse projeto.
+
+Se estiver utilizando o *gcc*, adicione a flag `-I<inc_dir>` no momento de
+compilar o código e a flag `-L<lib_dir>` no momento de linkar os objetos
+intermediários.
+
+`<inc_dir>` é o diretório no qual o *easy-plugpag.h* foi copiado.
+
+`<lib_dir>` é o diretório no qual o *easy-plugpag.so* foi copiado.
+
+
+## Exemplos
+
+### Pagamento
+
+```
+    stPPPSTransactionResult result;
+    memset(&result, 0, sizeof(stPPPSTransactionResult));
+
+    struct PlugPagApplicationData *appData = PlugPagApplicationData("easy-plugpag", "1.0.0");
+    struct PlugPag *pp = PlugPag("COM0", appData);
+    struct PlugPagPaymentData *paymentData = PlugPagPaymentData(PPPAGSEGURO_CREDIT, PPPAGSEGURO_A_VISTA, 1, "1234578", "easypp");
+    pp->pay(pp, paymentData, &result);
+```
+
+### Estorno
+
+```
+    stPPPSTransactionResult result;
+    memset(&result, 0, sizeof(stPPPSTransactionResult));
+
+    struct PlugPagApplicationData *appData = PlugPagApplicationData("easy-plugpag", "1.0.0");
+    struct PlugPag *pp = PlugPag("COM0", appData);
+    pp->voidPayment(pp, &result);
+```
+
+### Consulta da última transação efetuada com sucesso
+
+```
+    stPPPSTransactionResult result;
+    memset(&result, 0, sizeof(stPPPSTransactionResult));
+
+    struct PlugPagApplicationData *appData = PlugPagApplicationData("easy-plugpag", "1.0.0");
+    struct PlugPag *pp = PlugPag("COM0", appData);
+    pp->getLastApprovedTransaction(pp, &result);
+```
+
+### Verificando qual é a versão do PlugPag que está sendo utilizada
+
+```
+    struct PlugPagApplicationData *appData = PlugPagApplicationData("easy-plugpag", "1.0.0");
+    struct PlugPag *pp = PlugPag("COM0", appData);
+
+    char plugpagVersion[10];
+    pp->getVersion(pp, plugpagVersion);
+```
