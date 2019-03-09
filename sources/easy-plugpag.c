@@ -21,7 +21,7 @@ struct PlugPagInternalData
 {
     struct PlugPagApplicationData appData;
     tyComPort portNumber;
-    unsigned char isInitialized;
+    unsigned char isReleased;
 };
 
 
@@ -29,6 +29,7 @@ static int pay(struct PlugPag *plugpag, struct PlugPagPaymentData *paymentData, 
 static int voidPayment(struct PlugPag *plugpag, stPPPSTransactionResult *outResult);
 static int getLastApprovedTransaction(struct PlugPag *plugpag, stPPPSTransactionResult *outResult);
 static int getVersion(struct PlugPag *plugpag, char *outVersion);
+static int release(struct PlugPag *plugpag);
 
 
 struct PlugPag *PlugPag(tyComPort portNumber, struct PlugPagApplicationData *appData)
@@ -47,13 +48,17 @@ struct PlugPag *PlugPag(tyComPort portNumber, struct PlugPagApplicationData *app
     strncpy(internal->appData.appName, appData->appName, sizeof(tyAppName));
     strncpy(internal->appData.appVersion, appData->appVersion, sizeof(tyAppVersion));
     strncpy(internal->portNumber, portNumber, sizeof(tyComPort));
-    internal->isInitialized = (unsigned char) 0;
+    internal->isReleased = (unsigned char) 0;
+
+    SetVersionName(internal->appData.appName, internal->appData.appVersion);
+    InitBTConnection((const tyComPort *) internal->portNumber);
 
     pp->__internal = internal;
     pp->pay = pay;
     pp->voidPayment = voidPayment;
     pp->getLastApprovedTransaction = getLastApprovedTransaction;
     pp->getVersion = getVersion;
+    pp->release = release;
 
     return pp;
 }
@@ -70,9 +75,7 @@ static int pay(struct PlugPag *plugpag, struct PlugPagPaymentData *paymentData, 
            { return EASY_PLUGPAG_ERROR_MALFORMED_PAYMENT_DATA; });
 
     struct PlugPagInternalData *internal = (struct PlugPagInternalData *) plugpag->__internal;
-
-    SetVersionName(internal->appData.appName, internal->appData.appVersion);
-    InitBTConnection((const tyComPort *) internal->portNumber);
+    ASSERT(internal == NULL || internal->isReleased != 0, { return EASY_PLUGPAG_ERROR_RELEASED; });
 
     int result = SimplePaymentTransaction(
         paymentData->paymentMethod,
@@ -92,9 +95,7 @@ static int voidPayment(struct PlugPag *plugpag, stPPPSTransactionResult *outResu
     ASSERT(outResult == NULL, { return EASY_PLUGPAG_ERROR_NULL_RESULT_OUTPUT; });
 
     struct PlugPagInternalData *internal = (struct PlugPagInternalData *) plugpag->__internal;
-
-    SetVersionName(internal->appData.appName, internal->appData.appVersion);
-    InitBTConnection((const tyComPort *) internal->portNumber);
+    ASSERT(internal == NULL || internal->isReleased != 0, { return EASY_PLUGPAG_ERROR_RELEASED; });
 
     return CancelTransaction(outResult);
 }
@@ -106,9 +107,7 @@ static int getLastApprovedTransaction(struct PlugPag *plugpag, stPPPSTransaction
     ASSERT(outResult == NULL, { return EASY_PLUGPAG_ERROR_NULL_RESULT_OUTPUT; });
 
     struct PlugPagInternalData *internal = (struct PlugPagInternalData *) plugpag->__internal;
-
-    SetVersionName(internal->appData.appName, internal->appData.appVersion);
-    InitBTConnection((const tyComPort *) internal->portNumber);
+    ASSERT(internal == NULL || internal->isReleased != 0, { return EASY_PLUGPAG_ERROR_RELEASED; });
 
     return GetLastApprovedTransactionStatus(outResult);
 }
@@ -158,4 +157,19 @@ struct PlugPagPaymentData *PlugPagPaymentData(enPPPSPaymentMethod paymentMethod,
     memmove(data->userReference, userReference, sizeof(tyUserReference));
 
     return data;
+}
+
+
+static int release(struct PlugPag *plugpag)
+{
+    ASSERT(plugpag == NULL, { return EASY_PLUGPAG_OK; });
+
+    struct PlugPagInternalData *internal = (struct PlugPagInternalData *) plugpag->__internal;
+
+    ASSERT(internal == NULL || internal->isReleased != 0, { return EASY_PLUGPAG_OK; });
+
+    free(internal);
+    plugpag->__internal = NULL;
+
+    return EASY_PLUGPAG_OK;
 }
