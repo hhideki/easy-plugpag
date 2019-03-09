@@ -1,10 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
-#include <unistd.h>
 
-#include "libPPPagSeguro/PPPagSeguro.h"
 #include "easy-plugpag.h"
 
 static void printMenu();
@@ -18,7 +15,12 @@ static void startPayment(struct PlugPag *pp,
 static void startVoidPayment(struct PlugPag *pp,
                              stPPPSTransactionResult *result);
 
+static void queryLastSuccessfulTransaction(struct PlugPag *pp,
+                                           stPPPSTransactionResult *result);
+
 static void printResult(const int resultCode, const stPPPSTransactionResult result);
+
+static void printGeneralInformation(struct PlugPag *pp);
 
 
 int main(int argc, char *argv[])
@@ -39,28 +41,24 @@ int main(int argc, char *argv[])
 
         switch (option)
         {
-            case 0:
-                exit = 1;
-                break;
-
             case 1:
-                exit = 1;
-                break;
-
-            case 2:
                 paymentData = printPaymentMenu();
                 startPayment(pp, paymentData, &result);
                 break;
 
-            case 3:
+            case 2:
                 startVoidPayment(pp, &result);
                 break;
 
-            case 4:
-                exit = 1;
+            case 3:
+                queryLastSuccessfulTransaction(pp, &result);
                 break;
 
-            case 5:
+            case 4:
+                printGeneralInformation(pp);
+                break;
+
+            default:
                 exit = 1;
                 break;
         }
@@ -75,11 +73,10 @@ int main(int argc, char *argv[])
 static void printMenu()
 {
     printf("Menu\n");
-    printf("\t1. Configurar bluetooth\n");
-    printf("\t2. Pagamento\n");
-    printf("\t3. Estorno\n");
-    printf("\t4. Consultar última transacao\n");
-    printf("\t5. Informacoes gerais\n");
+    printf("\t1. Pagamento\n");
+    printf("\t2. Estorno\n");
+    printf("\t3. Consultar última transacao\n");
+    printf("\t4. Informacoes gerais\n");
     printf("\t0. Sair\n");
 }
 
@@ -150,6 +147,17 @@ static void startVoidPayment(struct PlugPag *pp,
     printResult(ret, *result);
 }
 
+static void queryLastSuccessfulTransaction(struct PlugPag *pp,
+                                           stPPPSTransactionResult *result)
+{
+    memset(result, 0, sizeof(stPPPSTransactionResult));
+
+    printf("Querying last successful transaction\n");
+    int ret = pp->getLastApprovedTransaction(pp, result);
+    printf("Querying finished\n");
+    printResult(ret, *result);
+}
+
 
 static void printResult(const int resultCode, const stPPPSTransactionResult result)
 {
@@ -171,4 +179,14 @@ static void printResult(const int resultCode, const stPPPSTransactionResult resu
     }
 
     printf("========================================================\n");
+}
+
+
+static void printGeneralInformation(struct PlugPag *pp)
+{
+    char version[50];
+
+    pp->getVersion(pp, version);
+
+    printf("Versao do PlugPag: %s\n", version);
 }
