@@ -44,6 +44,12 @@ int main(int argc, char *argv[])
             case 1:
                 paymentData = printPaymentMenu();
                 startPayment(pp, paymentData, &result);
+
+                if (paymentData != NULL)
+                {
+                    free(paymentData);
+                }
+
                 break;
 
             case 2:
@@ -65,6 +71,17 @@ int main(int argc, char *argv[])
     } while (exit == 0);
 
     printf("Finalizando aplicacao\n");
+
+    if (appData != NULL)
+    {
+        free(appData);
+    }
+
+    if (pp != NULL)
+    {
+        pp->release(pp);
+        free(pp);
+    }
 
     return 0;
 }

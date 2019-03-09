@@ -129,3 +129,14 @@ intermediários.
     char plugpagVersion[10];
     pp->getVersion(pp, plugpagVersion);
 ```
+
+### Liberando memória
+
+```
+    struct PlugPagApplicationData *appData = PlugPagApplicationData("easy-plugpag", "1.0.0");
+    struct PlugPag *pp = PlugPag("COM0", appData);
+
+    pp->release(pp);
+    free(pp);
+    free(appData);
+```
