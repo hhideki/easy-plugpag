@@ -5,11 +5,13 @@
 
 #include "libPPPagSeguro/PPPagSeguro.h"
 
-#define EASY_PLUGPAG_ERROR_BASE                     0xCABECA * -1
+#define EASY_PLUGPAG_OK                           0
+#define EASY_PLUGPAG_ERROR_BASE                   0xCABECA * -1
 #define EASY_PLUGPAG_ERROR_NULL_PLUGPAG_INSTANCE  EASY_PLUGPAG_ERROR_BASE - 1
 #define EASY_PLUGPAG_ERROR_NULL_PAYMENT_DATA      EASY_PLUGPAG_ERROR_BASE - 2
 #define EASY_PLUGPAG_ERROR_MALFORMED_PAYMENT_DATA EASY_PLUGPAG_ERROR_BASE - 3
 #define EASY_PLUGPAG_ERROR_NULL_RESULT_OUTPUT     EASY_PLUGPAG_ERROR_BASE - 4
+#define EASY_PLUGPAG_ERROR_NULL_OUTPUT            EASY_PLUGPAG_ERROR_BASE - 5
 
 
 struct PlugPagApplicationData
@@ -34,6 +36,7 @@ struct PlugPag
     int (*pay)(struct PlugPag *plugpag, struct PlugPagPaymentData *paymentData, stPPPSTransactionResult *result);
     int (*voidPayment)(struct PlugPag *plugpag, stPPPSTransactionResult *result);
     int (*getLastApprovedTransaction)(struct PlugPag *plugpag, stPPPSTransactionResult *result);
+    int (*getVersion)(struct PlugPag *plugpag, char *outVersion);
 
     void *__internal;
 };
